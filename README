@@ -1,0 +1,71 @@
+Early Bird APC Injection with RC4 Encrypted Payload
+Overview
+This project implements Early Bird APC Injection using the QueueUserAPC API to execute a payload in a remote process. The payload is encrypted using the RC4 encryption algorithm for added stealth. The injection method utilizes a suspended or debugged thread, enabling the payload to be executed when the thread is resumed.
+
+The project is modularized into separate files to allow each component to be reused in other projects. Each .cpp file has a corresponding .h header file, ensuring a clean and maintainable code structure.
+
+Features
+Early Bird APC Injection: Injects a payload into a suspended or debugged process, then queues the payload with the QueueUserAPC API to execute it once the thread is resumed.
+RC4 Payload Encryption: The payload is encrypted using the RC4 algorithm before being injected into the target process to bypass detection mechanisms.
+Modular Structure: Each file is modularized, making the code easy to reuse, modify, and maintain.
+Project Structure
+The project consists of the following files:
+
+1. ProcessCreation.h / ProcessCreation.cpp
+Purpose: Handles creating a new process, either in a suspended state or as a debugged process, which will later be used for injecting the payload.
+Functions:
+CreateSuspendedProcess: Creates a process in a suspended state using the CREATE_SUSPENDED flag.
+CreateDebuggedProcess: Creates a process using the DEBUG_PROCESS flag, where the local process acts as a debugger.
+Key API: CreateProcessA is used to create the target process.
+2. PayloadInjection.h / PayloadInjection.cpp
+Purpose: Responsible for writing the payload to the remote process's memory and queuing it with APC injection using QueueUserAPC.
+Functions:
+InjectPayload: Allocates memory in the target process and writes the encrypted payload to it using WriteProcessMemory.
+QueuePayloadAPC: Queues the payload in the target thread for execution using QueueUserAPC.
+Key API: VirtualAllocEx, WriteProcessMemory, QueueUserAPC.
+3. RC4Encryption.h / RC4Encryption.cpp
+Purpose: Implements the RC4 encryption algorithm to encrypt the payload before injecting it into the target process.
+Function:
+RC4Encrypt: Encrypts the payload using RC4 by scrambling the payload bytes with a key provided by the user.
+Explanation: The RC4 algorithm is a stream cipher that is lightweight and fast, making it ideal for obfuscating payloads.
+4. Main.cpp
+Purpose: The entry point of the program. This file brings all the modules together to perform the complete Early Bird APC Injection process.
+Workflow:
+Encrypt Payload: The payload is encrypted using RC4 before injection.
+Create Process: A suspended or debugged process is created using the functions from ProcessCreation.cpp.
+Inject Payload: The encrypted payload is written to the remote process’s memory using the functions from PayloadInjection.cpp.
+Queue APC: The payload is queued in the target thread for execution.
+Resume Thread: Finally, the suspended thread is resumed to execute the queued payload.
+How It Works
+Early Bird APC Injection:
+
+A process is created in a suspended or debugged state using CreateSuspendedProcess or CreateDebuggedProcess. This ensures that the process's thread is in a state that can accept APC injections.
+The payload, after being encrypted with RC4, is written to the process’s memory using InjectPayload.
+The APC is queued in the thread using QueuePayloadAPC, allowing the payload to be executed once the thread is resumed or when the debugger releases control.
+Finally, the thread is resumed using ResumeThread, causing the payload to be executed.
+RC4 Encryption:
+
+Before the payload is injected, it is encrypted using the RC4 algorithm. This encryption provides an extra layer of obfuscation, helping to avoid detection by antivirus and other security solutions.
+The RC4 function works by initializing a 256-byte key stream and using that to XOR each byte of the payload.
+Requirements
+Windows operating system.
+Visual Studio or another IDE with support for C++ and Windows APIs.
+Administrator privileges for injecting into processes.
+Compilation and Usage
+Clone the repository:
+
+bash
+Copy code
+git clone https://your-repo-url.git
+cd your-repo-folder
+Open the project in Visual Studio:
+
+Import the .cpp and .h files into a new Visual Studio project.
+Set the appropriate include paths for your Windows SDK.
+Compile the project:
+
+Use Visual Studio’s build tools to compile the program.
+Run the compiled executable:
+
+Ensure that the process you are targeting has been created in a suspended or debugged state.
+Run the program and pass the target process as an argument.
