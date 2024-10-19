@@ -1,30 +1,27 @@
-#include <windows.h>
 #include "Syscalls.h"
+#include <windows.h>
+#include <stdio.h>
 
-// Define STATUS_UNSUCCESSFUL if it's not included
-#ifndef STATUS_UNSUCCESSFUL
-#define STATUS_UNSUCCESSFUL ((NTSTATUS)0xC0000001L)  // Define the error code for NTSTATUS
-#endif
-
-// Custom function to call NtAllocateVirtualMemory syscall
-NTSTATUS NtAllocateVirtualMemory(
-    HANDLE processHandle,
-    PVOID* baseAddress,
-    PSIZE_T regionSize,
-    ULONG allocationType,
-    ULONG protect
-) {
+// Initialize the syscall function pointers
+BOOL InitializeSyscallStruct(PSyscallStruct St) {
+    // Use ANSI string for GetModuleHandleA (No 'L' prefix for wide-char)
     HMODULE hNtdll = GetModuleHandleA("ntdll.dll");
     if (!hNtdll) {
-        return STATUS_UNSUCCESSFUL; // If we cannot get ntdll.dll, return failure.
+        printf("[!] GetModuleHandleA Failed With Error: %d\n", GetLastError());
+        return FALSE;
     }
 
-    // Get the address of NtAllocateVirtualMemory from ntdll.dll
-    NtAllocateVirtualMemory_t pNtAllocateVirtualMemory = (NtAllocateVirtualMemory_t)GetProcAddress(hNtdll, "NtAllocateVirtualMemory");
-    if (!pNtAllocateVirtualMemory) {
-        return STATUS_UNSUCCESSFUL; // If we cannot find the syscall, return failure.
+    // Fetch the addresses of the syscalls
+    St->NtAllocateVirtualMemory = (NtAllocateVirtualMemory_t)GetProcAddress(hNtdll, "NtAllocateVirtualMemory");
+    St->NtProtectVirtualMemory = (NtProtectVirtualMemory_t)GetProcAddress(hNtdll, "NtProtectVirtualMemory");
+    St->NtWriteVirtualMemory = (NtWriteVirtualMemory_t)GetProcAddress(hNtdll, "NtWriteVirtualMemory");
+    St->NtQueueApcThread = (NtQueueApcThread_t)GetProcAddress(hNtdll, "NtQueueApcThread");
+
+    // Check if all necessary syscalls were found
+    if (!St->NtAllocateVirtualMemory || !St->NtProtectVirtualMemory || !St->NtWriteVirtualMemory || !St->NtQueueApcThread) {
+        printf("[!] Could Not Get Required Syscalls.\n");
+        return FALSE;
     }
 
-    // Now call NtAllocateVirtualMemory
-    return pNtAllocateVirtualMemory(processHandle, baseAddress, 0, regionSize, allocationType, protect);
+    return TRUE;
 }
