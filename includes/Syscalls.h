@@ -2,8 +2,9 @@
 #define SYSCALLS_H
 
 #include <windows.h>
+#include <winternl.h>  // Include for POBJECT_ATTRIBUTES and NT functions
 
-// Define function pointers for syscalls
+// Define function pointers for necessary syscalls
 typedef NTSTATUS(WINAPI* NtAllocateVirtualMemory_t)(
     HANDLE ProcessHandle,
     PVOID* BaseAddress,
@@ -33,14 +34,46 @@ typedef NTSTATUS(WINAPI* NtQueueApcThread_t)(
     PVOID ApcStatusBlock OPTIONAL,
     ULONG ApcReserved OPTIONAL);
 
+typedef NTSTATUS(NTAPI* NtCreateSection_t)(
+    PHANDLE SectionHandle,
+    ACCESS_MASK DesiredAccess,
+    POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,  // Fixed declaration
+    PLARGE_INTEGER MaximumSize OPTIONAL,
+    ULONG SectionPageProtection,
+    ULONG AllocationAttributes,
+    HANDLE FileHandle OPTIONAL);
+
+typedef NTSTATUS(NTAPI* NtCreateProcess_t)(
+    PHANDLE ProcessHandle,
+    ACCESS_MASK DesiredAccess,
+    POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,  // Fixed declaration
+    HANDLE ParentProcess,
+    BOOLEAN InheritObjectTable,
+    HANDLE SectionHandle OPTIONAL,
+    HANDLE DebugPort OPTIONAL,
+    HANDLE ExceptionPort OPTIONAL);
+
+// Function pointer for NtSetInformationFile
+typedef NTSTATUS(WINAPI* NtSetInformationFile_t)(
+    HANDLE FileHandle,
+    PIO_STATUS_BLOCK IoStatusBlock,
+    PVOID FileInformation,
+    ULONG Length,
+    FILE_INFORMATION_CLASS FileInformationClass
+    );
+
 // Struct to hold syscall pointers
 typedef struct _SyscallStruct {
     NtAllocateVirtualMemory_t NtAllocateVirtualMemory;
     NtProtectVirtualMemory_t NtProtectVirtualMemory;
     NtWriteVirtualMemory_t NtWriteVirtualMemory;
     NtQueueApcThread_t NtQueueApcThread;
-} SyscallStruct, * PSyscallStruct;
+    NtCreateSection_t NtCreateSection;
+    NtCreateProcess_t NtCreateProcess;
+    NtSetInformationFile_t NtSetInformationFile;  // Added for NtSetInformationFile
+} SyscallStruct;
 
-BOOL InitializeSyscallStruct(PSyscallStruct St);
+// Correct declaration of the function
+BOOL InitializeSyscallStruct(SyscallStruct* St);
 
 #endif

