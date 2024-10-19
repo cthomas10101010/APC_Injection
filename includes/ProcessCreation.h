@@ -1,9 +1,9 @@
-#ifndef PAYLOADINJECTION_H
-#define PAYLOADINJECTION_H
+#ifndef PROCESSCREATION_H
+#define PROCESSCREATION_H
 
 #include <windows.h>
 
-BOOL InjectPayload(HANDLE hProcess, LPVOID lpPayload, SIZE_T payloadSize);
-BOOL QueuePayloadAPC(HANDLE hThread, LPVOID lpPayloadBase);
+BOOL CreateSuspendedProcess(LPCSTR lpProcessName, DWORD* dwProcessId, HANDLE* hProcess, HANDLE* hThread);
+BOOL CreateDebuggedProcess(LPCSTR lpProcessName, DWORD* dwProcessId, HANDLE* hProcess, HANDLE* hThread);
 
 #endif

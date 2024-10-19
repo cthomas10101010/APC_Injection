@@ -3,7 +3,7 @@
 
 #include <windows.h>
 
-BOOL InjectPayload(HANDLE hProcess, LPVOID lpPayload, SIZE_T payloadSize);
+LPVOID InjectPayload(HANDLE hProcess, LPVOID lpPayload, SIZE_T payloadSize);
 BOOL QueuePayloadAPC(HANDLE hThread, LPVOID lpPayloadBase);
 
 #endif

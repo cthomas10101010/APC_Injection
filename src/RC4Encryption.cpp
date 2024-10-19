@@ -1,4 +1,5 @@
 #include "RC4Encryption.h"
+#include <cstddef>  // Include for size_t
 
 void RC4Encrypt(unsigned char* data, size_t dataLen, unsigned char* key, size_t keyLen) {
     unsigned char S[256];
@@ -19,7 +20,7 @@ void RC4Encrypt(unsigned char* data, size_t dataLen, unsigned char* key, size_t 
     i = 0;
     j = 0;
 
-    for (size_t n = 0; n < dataLen; n++) {
+    for (size_t n = 0; n < dataLen; n++) {  // Use size_t here
         i = (i + 1) % 256;
         j = (j + S[i]) % 256;
         unsigned char temp = S[i];
