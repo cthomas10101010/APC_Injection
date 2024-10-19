@@ -87,9 +87,3 @@ Disclaimer
 This program is intended for educational purposes only. Unauthorized use of this tool on any system without explicit permission is illegal and unethical. The developers of this tool are not responsible for any misuse.
 
 By running this program, you acknowledge that it is designed for educational and ethical hacking purposes. Always ensure you have permission before testing on any machine.
-
-
-
-
-
-
