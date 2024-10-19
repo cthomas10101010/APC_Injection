@@ -11,8 +11,7 @@ Stealth Execution: The reverse shell is launched in hidden mode using the powers
 Modular Code: The program is organized into separate files to handle different operations, making it easy to modify or extend.
 Components
 The project consists of the following files:
-owerShell Reverse Shell
-The reverse shell is designed to connect back to a remote listener, allowing the remote machine to send commands to the compromised system. The PowerShell reverse shell is hidden and bypasses execution restrictions using -
+
 Main.cpp: The main entry point for the program. It calls functions to either launch calc.exe or run a PowerShell reverse shell.
 ShellOperations.cpp: Contains functions for launching both the calculator and the PowerShell reverse shell.
 ShellOperations.h: Header file declaring the functions in ShellOperations.cpp.
@@ -86,3 +85,11 @@ Copy code
 APC_Injection.exe
 Disclaimer
 This program is intended for educational purposes only. Unauthorized use of this tool on any system without explicit permission is illegal and unethical. The developers of this tool are not responsible for any misuse.
+
+By running this program, you acknowledge that it is designed for educational and ethical hacking purposes. Always ensure you have permission before testing on any machine.
+
+
+
+
+
+
